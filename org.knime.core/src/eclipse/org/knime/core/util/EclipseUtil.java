@@ -137,7 +137,7 @@ public final class EclipseUtil {
     static {
         boolean b = false;
         try {
-            b = checkSDK();
+            b = checkJUnit() || checkSDK();
         } catch (RuntimeException ex) {
             NodeLogger.getLogger("org.knime.core.util.EclipseUtil").error(
                 "Could not determine if we are run from the SDK: " + ex.getMessage(), ex);
@@ -159,6 +159,15 @@ public final class EclipseUtil {
     }
 
     private EclipseUtil() {
+    }
+
+    private static boolean checkJUnit() {
+        for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
+            if (element.getClassName().startsWith("org.junit.")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -275,7 +284,13 @@ public final class EclipseUtil {
      */
     private static void collectInDirectory(final File directory, final String packageName, final ClassFilter filter,
         final List<Class<?>> classes, final ClassLoader classLoader) {
-        for (File f : directory.listFiles()) {
+        final File[] files = directory.listFiles();
+
+        if (files == null) {
+            return;
+        }
+
+        for (File f : files) {
             if (f.isDirectory()) {
                 collectInDirectory(f, packageName + f.getName() + ".", filter, classes, classLoader);
             } else if (f.getName().endsWith(".class")) {
@@ -285,9 +300,9 @@ public final class EclipseUtil {
                     if (filter.accept(cl)) {
                         classes.add(cl);
                     }
-                } catch (ClassNotFoundException ex) {
-                    NodeLogger.getLogger(EclipseUtil.class).error(
-                        "Could not load class '" + className + "': " + ex.getMessage(), ex);
+                } catch (SecurityException | ClassNotFoundException ex) {
+//                    NodeLogger.getLogger(EclipseUtil.class).error(
+//                        "Could not load class '" + className + "': " + ex.getMessage(), ex);
                 }
             }
         }
