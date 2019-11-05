@@ -78,7 +78,7 @@ import org.xml.sax.SAXException;
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  * @param <T> the concrete type of the {@link NodeModel}
  */
-public abstract class NodeFactory<T extends NodeModel> {
+public abstract class NodeFactory<T extends NodeModel> implements NodeDescriptionRO {
     private static final List<String> LOADED_NODE_FACTORIES = new ArrayList<String>();
 
     private static final List<String> RO_LIST = Collections.unmodifiableList(LOADED_NODE_FACTORIES);
@@ -231,6 +231,10 @@ public abstract class NodeFactory<T extends NodeModel> {
         m_initialized = true;
     }
 
+    NodeDescription getNodeDescription() {
+        return m_nodeDescription;
+    }
+
     /**
      * Creates an input stream containing the properties for the node. This
      * can be overridden by subclasses to provide this information dynamically.
@@ -335,6 +339,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      *
      * @return XML description of this node
      */
+    @Override
     public Element getXMLDescription() {
         return m_nodeDescription.getXMLDescription();
     }
@@ -384,6 +389,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      *
      * @return the node's name
      */
+    @Override
     public final String getNodeName() {
         return m_nodeDescription.getNodeName();
     }
@@ -394,6 +400,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @param index the index of the input port, starting at 0
      * @return an input port name
      */
+    @Override
     public String getInportName(final int index) {
         String name = m_nodeDescription.getInportName(index);
         return (name == null) ? "No name available" : name;
@@ -405,6 +412,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @param index the index of the output port, starting at 0
      * @return an output port name
      */
+    @Override
     public String getOutportName(final int index) {
         String name = m_nodeDescription.getOutportName(index);
         return (name == null) ? "No name available" : name;
@@ -416,6 +424,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @param index the index of the input port, starting at 0
      * @return an input port description
      */
+    @Override
     public final String getInportDescription(final int index) {
         String description = m_nodeDescription.getInportDescription(index);
         return (description == null) ? "No description available" : description;
@@ -427,6 +436,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @param index the index of the output port, starting at 0
      * @return an output port description
      */
+    @Override
     public final String getOutportDescription(final int index) {
         String description = m_nodeDescription.getOutportDescription(index);
         return (description == null) ? "No description available" : description;
@@ -437,8 +447,10 @@ public abstract class NodeFactory<T extends NodeModel> {
      *
      * @param index the index of the view, starting at 0
      * @return a view description
+     * @since 4.1
      */
-    protected final String getViewDescription(final int index) {
+    @Override
+    public final String getViewDescription(final int index) {
         String description = m_nodeDescription.getViewDescription(index);
         return (description == null) ? "No description available" : description.replaceAll("(?:\\s+|\n)", "");
     }
@@ -646,6 +658,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      *
      * @return the node's type
      */
+    @Override
     public NodeType getType() {
         return m_nodeDescription.getType();
     }
@@ -689,6 +702,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @return name of the interactive view or <code>null</code>
      * @since 2.8
      */
+    @Override
     public String getInteractiveViewName() {
         return m_nodeDescription.getInteractiveViewName();
     }
@@ -713,6 +727,7 @@ public abstract class NodeFactory<T extends NodeModel> {
      * @return <code>true</code> if the node is deprecated, <code>false</code> otherwise
      * @since 3.0
      */
+    @Override
     public final boolean isDeprecated() {
         return isDeprecatedInternal();
     }

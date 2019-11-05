@@ -51,7 +51,11 @@ package org.knime.core.node.context;
 import java.net.URL;
 import java.util.Optional;
 
+import org.apache.xmlbeans.XmlException;
 import org.knime.core.node.InvalidSettingsException;
+import org.knime.core.node.NodeDescription;
+import org.knime.core.node.NodeDescription41Proxy;
+import org.knime.core.node.NodeDescriptionRO;
 import org.knime.core.node.NodeModel;
 import org.knime.core.node.NodeSettingsRO;
 import org.knime.core.node.NodeSettingsWO;
@@ -64,12 +68,16 @@ import org.knime.core.node.context.url.impl.DefaultModifiableURLConfiguration;
  *
  * @author Mark Ortmann, KNIME GmbH, Berlin, Germany
  * @noreference This class is not intended to be referenced by clients.
+ * @noinstantiate This class is not intended to be instantiated by clients.
+ *
  */
 public final class ModifiableNodeCreationConfiguration extends NodeCreationConfiguration
     implements DeepCopy<ModifiableNodeCreationConfiguration>, NodeSettingsPersistable {
 
     /** Node creation config key. */
     private static final String NODE_CREATION_CONFIG_KEY = "node_creation_config";
+
+    private NodeDescription m_nodeDescription;
 
     /**
      * Constructor.
@@ -93,6 +101,21 @@ public final class ModifiableNodeCreationConfiguration extends NodeCreationConfi
     @Override
     public Optional<ModifiableURLConfiguration> getURLConfig() {
         return super.getModifiableURLConfig();
+    }
+
+    public final void setNodeDescription(final NodeDescription description) {
+        try {
+            final NodeDescription41Proxy proxy = new NodeDescription41Proxy(description.getXMLDescription());
+            proxy.update(this);
+            m_nodeDescription = proxy;
+        } catch (final XmlException e) {
+
+        }
+
+    }
+
+    public final NodeDescriptionRO getNodeDescription() {
+        return m_nodeDescription;
     }
 
     /**

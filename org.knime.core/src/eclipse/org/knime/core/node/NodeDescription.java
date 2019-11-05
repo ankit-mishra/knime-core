@@ -62,7 +62,7 @@ import org.w3c.dom.Element;
  * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
  * @since 2.8
  */
-public abstract class NodeDescription {
+public abstract class NodeDescription implements NodeDescriptionRO {
 
     /** Creating the DocumentBuilderFactory, hence a lazy initializer, see AP-8171. */
     private static final LazyInitializer<DocumentBuilderFactory> DOCUMENT_BUILDER_FACTORY_INITIALIZER =
@@ -92,6 +92,7 @@ public abstract class NodeDescription {
      * @return an input port description or <code>null</code> if no description exists
      * @see NodeFactory#getInportDescription(int)
      */
+    @Override
     public abstract String getInportDescription(final int index);
 
     /**
@@ -101,6 +102,7 @@ public abstract class NodeDescription {
      * @return an input port name or <code>null</code> if not name is known
      * @see NodeFactory#getInportName(int)
      */
+    @Override
     public abstract String getInportName(final int index);
 
     /**
@@ -109,6 +111,7 @@ public abstract class NodeDescription {
      * @return name of the interactive view or <code>null</code>
      * @see NodeFactory#getInteractiveViewName()
      */
+    @Override
     public abstract String getInteractiveViewName();
 
     /**
@@ -117,6 +120,7 @@ public abstract class NodeDescription {
      * @return the node's name or <code>null</code> if no name is known
      * @see NodeFactory#getNodeName()
      */
+    @Override
     public abstract String getNodeName();
 
     /**
@@ -126,6 +130,7 @@ public abstract class NodeDescription {
      * @return an output port description or <code>null</code> if not description exists
      * @see NodeFactory#getOutportDescription(int)
      */
+    @Override
     public abstract String getOutportDescription(final int index);
 
     /**
@@ -135,6 +140,7 @@ public abstract class NodeDescription {
      * @return an output port name or <code>null</code> if no name is known
      * @see NodeFactory#getOutportName(int)
      */
+    @Override
     public abstract String getOutportName(final int index);
 
     /**
@@ -143,6 +149,7 @@ public abstract class NodeDescription {
      * @return the node's type
      * @see NodeFactory#getType()
      */
+    @Override
     public abstract NodeType getType();
 
     /**
@@ -159,6 +166,7 @@ public abstract class NodeDescription {
      * @return a view description or <code>null</code> if no description exists
      * @see NodeFactory#getViewDescription(int)
      */
+    @Override
     public abstract String getViewDescription(final int index);
 
     /**
@@ -176,6 +184,7 @@ public abstract class NodeDescription {
      *
      * @return XML description of this node
      */
+    @Override
     public abstract Element getXMLDescription();
 
     /**
@@ -220,6 +229,7 @@ public abstract class NodeDescription {
      * @return <code>true</code> if the node is deprecated, <code>false</code> otherwise
      * @since 3.0
      */
+    @Override
     public boolean isDeprecated() {
         return m_deprecated;
     }

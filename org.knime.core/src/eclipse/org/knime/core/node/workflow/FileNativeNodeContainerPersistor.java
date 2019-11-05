@@ -190,6 +190,7 @@ public class FileNativeNodeContainerPersistor extends FileSingleNodeContainerPer
         }
         NodeFactory<NodeModel> nodeFactory;
         try {
+            // here we load the node description
             nodeFactory = loadNodeFactory(nodeInfo.getFactoryClassNotNull());
         } catch (Exception e) {
             // setDirtyAfterLoad(); // don't set dirty, missing node placeholder will be used instead

@@ -278,11 +278,19 @@ public final class Node implements NodeModelWarningListener {
         }
         m_factory = nodeFactory;
         if (creationConfig == null && m_factory instanceof ConfigurableNodeFactory) {
-            m_creationConfig = ((ConfigurableNodeFactory<NodeModel>)m_factory).createNodeCreationConfig();
+            m_creationConfig = Optional.ofNullable(creationConfig)
+                .orElse(((ConfigurableNodeFactory<NodeModel>)m_factory).createNodeCreationConfig());
         } else {
             m_creationConfig = creationConfig;
         }
-        m_name = m_factory.getNodeName().intern();
+        if(m_creationConfig != null) {
+            m_creationConfig.setNodeDescription(m_factory.getNodeDescription());
+        }
+        try {
+        m_name = getNodeDescription().getNodeName().intern();
+        } catch(final NullPointerException e) {
+            System.out.println("woot");
+        }
         m_model = m_factory.callCreateNodeModel(m_creationConfig);
         m_model.addWarningListener(this);
         m_messageListeners = new CopyOnWriteArraySet<NodeMessageListener>();
@@ -290,7 +298,7 @@ public final class Node implements NodeModelWarningListener {
         m_inputs = new Input[m_model.getNrInPorts() + 1];
         m_inputs[0] = new Input("Variable Inport", FlowVariablePortObject.TYPE_OPTIONAL);
         for (int i = 1; i < m_inputs.length; i++) {
-            m_inputs[i] = new Input(m_factory.getInportName(i - 1), m_model.getInPortType(i - 1));
+            m_inputs[i] = new Input(getNodeDescription().getInportName(i - 1), m_model.getInPortType(i - 1));
         }
 
         // create an extra output port (index: 0) for the variables.
@@ -305,7 +313,7 @@ public final class Node implements NodeModelWarningListener {
         for (int i = 1; i < m_outputs.length; i++) {
             m_outputs[i] = new Output();
             m_outputs[i].type = m_model.getOutPortType(i - 1);
-            m_outputs[i].name = m_factory.getOutportName(i - 1);
+            m_outputs[i].name = getNodeDescription().getOutportName(i - 1);
             m_outputs[i].spec = null;
             m_outputs[i].object = null;
             m_outputs[i].summary = null;
@@ -679,7 +687,7 @@ public final class Node implements NodeModelWarningListener {
      * @return The node's type.
      */
     public NodeType getType() {
-        return m_factory.getType();
+        return getNodeDescription().getType();
     }
 
     /**
@@ -691,7 +699,7 @@ public final class Node implements NodeModelWarningListener {
      * @see org.knime.core.node.NodeFactory#getXMLDescription()
      */
     public Element getXMLDescription() {
-        return m_factory.getXMLDescription();
+        return getNodeDescription().getXMLDescription();
     }
 
     /**
@@ -749,7 +757,7 @@ public final class Node implements NodeModelWarningListener {
         if (index <= 0) {
             return "Variable Inport";
         }
-        return m_factory.getInportName(index - 1);
+        return getNodeDescription().getInportName(index - 1);
     }
 
     /**
@@ -784,7 +792,11 @@ public final class Node implements NodeModelWarningListener {
         if (index <= 0) {
             return "Variable Outport";
         }
-        return m_factory.getOutportName(index - 1);
+        return getNodeDescription().getOutportName(index - 1);
+    }
+
+    private NodeDescriptionRO getNodeDescription() {
+        return m_creationConfig != null ? m_creationConfig.getNodeDescription() : m_factory;
     }
 
     /**
@@ -1966,9 +1978,8 @@ public final class Node implements NodeModelWarningListener {
      * @since 2.8
      */
     public String getInteractiveViewName() {
-        return hasInteractiveView() || hasWizardView()
-            ? StringUtils.defaultIfEmpty(m_factory.getInteractiveViewName(), "MISSING VIEW NAME IN NODE DESCRIPTION")
-            : null;
+        return hasInteractiveView() || hasWizardView() ? StringUtils.defaultIfEmpty(
+            getNodeDescription().getInteractiveViewName(), "MISSING VIEW NAME IN NODE DESCRIPTION") : null;
     }
 
     /**

@@ -42,10 +42,11 @@
  *  when such Node is propagated with or for interoperation with KNIME.
  * ---------------------------------------------------------------------
  *
- * Created on 28.05.2013 by thor
+ * Created on 5.10.2019 by Mark Ortmann
  */
 package org.knime.core.node;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -55,9 +56,11 @@ import org.apache.xmlbeans.XmlError;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlOptions;
 import org.knime.core.node.NodeFactory.NodeType;
+import org.knime.core.node.context.ModifiableNodeCreationConfiguration;
 import org.knime.node.v41.InPort;
 import org.knime.node.v41.KnimeNodeDocument;
 import org.knime.node.v41.OutPort;
+import org.knime.node.v41.Ports;
 import org.knime.node.v41.View;
 import org.knime.node.v41.Views;
 import org.w3c.dom.Document;
@@ -69,7 +72,7 @@ import org.w3c.dom.Element;
  * If assertions are enabled (see {@link KNIMEConstants#ASSERTIONS_ENABLED} it also checks the contents of the XML for
  * against the XML schema and reports errors via the logger.
  *
- * @author Thorsten Meinl, KNIME AG, Zurich, Switzerland
+ * @author Mark Ortmann, KNIME GmbH, Berlin, Germany
  * @since 4.1
  */
 public final class NodeDescription41Proxy extends NodeDescription {
@@ -83,7 +86,9 @@ public final class NodeDescription41Proxy extends NodeDescription {
         OPTIONS.setLoadSubstituteNamespaces(namespaceMap);
     }
 
-    private final KnimeNodeDocument m_document;
+    private final Element m_origDoc;
+
+    private KnimeNodeDocument m_document;
 
     /**
      * Creates a new proxy object using the given XML document. If assertions are enabled (see
@@ -94,7 +99,20 @@ public final class NodeDescription41Proxy extends NodeDescription {
      * @throws XmlException if something goes wrong while analyzing the XML structure
      */
     public NodeDescription41Proxy(final Document doc) throws XmlException {
-        m_document = KnimeNodeDocument.Factory.parse(doc.getDocumentElement(), OPTIONS);
+        this(doc.getDocumentElement());
+    }
+
+    /**
+     * Creates a new proxy object using the given XML document. If assertions are enabled (see
+     * {@link KNIMEConstants#ASSERTIONS_ENABLED} it also checks the contents of the XML for against the XML schema and
+     * reports errors via the logger.
+     *
+     * @param doc the XML document of the node description XML file
+     * @throws XmlException if something goes wrong while analyzing the XML structure
+     */
+    public NodeDescription41Proxy(final Element doc) throws XmlException {
+        m_origDoc = doc;
+        m_document = KnimeNodeDocument.Factory.parse(m_origDoc, OPTIONS);
         setIsDeprecated(m_document.getKnimeNode().getDeprecated());
         validate();
     }
@@ -108,6 +126,7 @@ public final class NodeDescription41Proxy extends NodeDescription {
      */
     public NodeDescription41Proxy(final KnimeNodeDocument doc) {
         m_document = doc;
+        m_origDoc = (Element)m_document.getKnimeNode().getDomNode();
         setIsDeprecated(m_document.getKnimeNode().getDeprecated());
         if (KNIMEConstants.ASSERTIONS_ENABLED) {
             validate();
@@ -135,17 +154,11 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return valid;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getIconPath() {
         return m_document.getKnimeNode().getIcon();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getInportDescription(final int index) {
         if (m_document.getKnimeNode().getPorts() == null) {
@@ -160,9 +173,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getInportName(final int index) {
         if (m_document.getKnimeNode().getPorts() == null) {
@@ -177,9 +187,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getInteractiveViewName() {
         if (m_document.getKnimeNode().getInteractiveView() != null) {
@@ -189,9 +196,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getNodeName() {
         String nodeName = m_document.getKnimeNode().getName();
@@ -202,9 +206,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getOutportDescription(final int index) {
         if (m_document.getKnimeNode().getPorts() == null) {
@@ -219,9 +220,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getOutportName(final int index) {
         if (m_document.getKnimeNode().getPorts() == null) {
@@ -236,9 +234,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public NodeType getType() {
         try {
@@ -250,18 +245,12 @@ public final class NodeDescription41Proxy extends NodeDescription {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public int getViewCount() {
         Views views = m_document.getKnimeNode().getViews();
         return (views == null) ? 0 : views.sizeOfViewArray();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getViewDescription(final int index) {
         if (m_document.getKnimeNode().getViews() == null) {
@@ -276,9 +265,6 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public String getViewName(final int index) {
         if (m_document.getKnimeNode().getViews() == null) {
@@ -293,20 +279,26 @@ public final class NodeDescription41Proxy extends NodeDescription {
         return null;
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected void setIsDeprecated(final boolean b) {
         super.setIsDeprecated(b);
         m_document.getKnimeNode().setDeprecated(b);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     public Element getXMLDescription() {
         return (Element)m_document.getKnimeNode().getDomNode();
+    }
+
+    public void update(final ModifiableNodeCreationConfiguration creationConfig) throws XmlException {
+        m_document = KnimeNodeDocument.Factory.parse(m_origDoc, OPTIONS);
+        Ports ports = m_document.getKnimeNode().getPorts();
+        OutPort outPortArray = ports.getOutPortArray(0);
+        for (int i = 0; i < Math.random() * 2; i++) {
+            InPort addNewInPort = m_document.getKnimeNode().getPorts().addNewInPort();
+            addNewInPort.set(outPortArray);
+            addNewInPort.setName("deine mudda");
+            addNewInPort.setIndex(BigInteger.valueOf(2 + i));
+        }
     }
 }
